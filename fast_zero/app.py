@@ -69,6 +69,16 @@ def read_users(
     users = session.scalars(select(User).offset(skip).limit(limit)).all()
     return {'users': users}
 
+@app.get('/users/{user_id}', response_model=UserPublic)
+def get_user(user_id: int, session: Session = Depends(get_session)):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+    return db_user
+
 
 @app.put('/users/{user_id}', response_model=UserPublic)
 def update_user(
@@ -109,12 +119,3 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
     session.commit()
 
     return {'message': 'User deleted'}
-
-
-# @app.get('/users/{user_id}', response_model=UserPublic)
-# def get_user(user_id: int):
-#     if user_id > len(database) or user_id < 1:
-#         raise HTTPException(
-#             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-#         )
-#     return database[user_id - 1]
